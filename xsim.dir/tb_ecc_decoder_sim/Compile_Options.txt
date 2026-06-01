@@ -1,0 +1,1 @@
+--incr --debug "typical" --relax "tb_ecc_decoder" -s "tb_ecc_decoder_sim" 

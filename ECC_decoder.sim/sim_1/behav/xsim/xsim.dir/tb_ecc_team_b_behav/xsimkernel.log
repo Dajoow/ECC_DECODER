@@ -1,0 +1,7 @@
+Running: xsim.dir/tb_ecc_team_b_behav/xsimk.exe -simmode gui -wdb tb_ecc_team_b_behav.wdb -simrunnum 0 -socket 63842
+Design successfully loaded
+Design Loading Memory Usage: 8592 KB (Peak: 8592 KB)
+Design Loading CPU Usage: 0 ms
+Simulation completed
+Simulation Memory Usage: 9756 KB (Peak: 9756 KB)
+Simulation CPU Usage: 46 ms

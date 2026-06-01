@@ -1,0 +1,23 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Mon Jun  1 13:35:58 2026
+# Process ID         : 2800
+# Current directory  : C:/Users/DJ/Desktop/ECC_decoder
+# Command line       : vivado.exe -mode batch -source check_synth.tcl
+# Log file           : C:/Users/DJ/Desktop/ECC_decoder/vivado.log
+# Journal file       : C:/Users/DJ/Desktop/ECC_decoder\vivado.jou
+# Running On         : DESKTOP-BKHQM7M
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 19045
+# Processor Detail   : 13th Gen Intel(R) Core(TM) i5-13400F
+# CPU Frequency      : 2496 MHz
+# CPU Physical cores : 10
+# CPU Logical cores  : 16
+# Host memory        : 34138 MB
+# Swap memory        : 2147 MB
+# Total Virtual      : 36286 MB
+# Available Virtual  : 19817 MB
+#-----------------------------------------------------------
