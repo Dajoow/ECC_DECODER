@@ -10,6 +10,8 @@ module top_ecc_rx (
     input  wire        rst_n,
     input  wire        valid_in,
     input  wire [12:0] ecc_data_in,
+    input  wire        display_data_mode,
+    input  wire [7:0]  raw_data_in,
 
     output wire        valid_out,
     output wire [7:0]  data_out,
@@ -23,7 +25,7 @@ module top_ecc_rx (
     output wire [7:0]  dig
 );
 
-    wire [15:0] display_chars;
+    wire [39:0] display_chars;
 
     ecc_decoder u_ecc_decoder (
         .clk                    (clk),
@@ -56,6 +58,9 @@ module top_ecc_rx (
         .no_error               (no_error),
         .single_error_corrected (single_error_corrected),
         .double_error_detected  (double_error_detected),
+        .display_data_mode      (display_data_mode),
+        .raw_data_in            (raw_data_in),
+        .decoded_data_in        (data_out),
         .display_chars          (display_chars)
     );
 

@@ -17,6 +17,27 @@ set_property IOSTANDARD LVCMOS33 [get_ports clk]
 set_property PACKAGE_PIN P19 [get_ports rst_n]
 set_property IOSTANDARD LVCMOS33 [get_ports rst_n]
 
+## TeamA manual send key: KEY1, active low
+set_property PACKAGE_PIN E3 [get_ports key1_n]
+set_property IOSTANDARD LVCMOS33 [get_ports key1_n]
+
+## TeamA DIP switches
+## sw[1:0] : selects one adjacent pair among payload bits
+##           00=D0/D1, 01=D2/D3, 10=D4/D5, 11=D6/D7
+## sw[2]   : injects the first selected payload bit when low
+## sw[3]   : injects the second selected payload bit when low
+set_property PACKAGE_PIN N14 [get_ports {sw[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {sw[0]}]
+
+set_property PACKAGE_PIN P16 [get_ports {sw[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {sw[1]}]
+
+set_property PACKAGE_PIN R17 [get_ports {sw[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {sw[2]}]
+
+set_property PACKAGE_PIN N15 [get_ports {sw[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {sw[3]}]
+
 ## Board LEDs: four independent green LEDs
 ## 当前板上验证按高电平点亮处理。
 ## led[0] -> LED1: no_error

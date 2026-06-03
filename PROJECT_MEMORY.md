@@ -10,13 +10,13 @@
 top_ecc_rx_board_demo
 ```
 
-该顶层内部自动产生三组 SECDED 测试码字，约每 3 秒循环显示：
+当前板级顶层集成 TeamA 发送侧和现有接收解码侧：
 
 ```text
-GOOD：无错误
-FIX1：单比特错误已纠正
-ERR2：双比特错误已检测，不纠正
+TeamA 数据源 -> TeamA SECDED 编码器 -> TeamA 错误注入 -> top_ecc_rx 解码显示
 ```
+
+TeamA 数据源每 2 秒自动递增 1 字节。按下 KEY1 时，TeamA 锁存当前原始数据、编码、按拨码配置注入错误，并向 `top_ecc_rx` 发送 1 拍 `valid_in`。
 
 ## 主要文件
 
@@ -31,20 +31,58 @@ ECC_decoder.srcs/sources_1/new/display_controller.v
   根据 no_error / single_error_corrected / double_error_detected 选择 GOOD / FIX1 / ERR2。
 
 ECC_decoder.srcs/sources_1/new/seg_driver.v
-  八段共阳数码管动态扫描驱动，输出 sel[7:0] 和 dig[7:0]。
+  八段共阳数码管动态扫描驱动，输出 sel[7:0] 和 dig[7:0]，当前扫描 8 位字符。
+
+ECC_decoder.srcs/sources_1/new/team_a_tx.v
+  TeamA 发送侧：2 秒自动数据源、8bit SECDED 编码器、拨码控制错误注入、KEY1 手动发送触发。
 
 ECC_decoder.srcs/sources_1/new/top_ecc_rx.v
-  接收解码显示模块顶层，保留 valid_in 和 ecc_data_in 接口，供 testbench 和后续系统集成使用。
+  接收解码显示模块顶层，保留 valid_in 和 ecc_data_in 接口，支持状态显示和 raw/decoded 数据 HEX 显示。
 
 ECC_decoder.srcs/sources_1/new/top_ecc_rx_board_demo.v
-  单板演示顶层，只暴露真实板级 IO，内部循环产生无错、单错、双错码字。
+  单板演示顶层，只暴露真实板级 IO，连接 TeamA 发送侧和现有接收解码显示侧。
 
 ECC_decoder.srcs/sim_1/new/tb_ecc_decoder.v
   ECC 解码功能仿真，覆盖无错误、单比特错误、双比特错误三种场景。
 
+ECC_decoder.srcs/sim_1/new/tb_team_a_tx.v
+  TeamA 闭环仿真，覆盖无注错、单 bit 注错和双 bit 注错。
+
 ECC_decoder.srcs/constrs_1/new/top_ecc_rx.xdc
-  当前板级顶层的时钟、LED、数码管管脚约束。
+  当前板级顶层的时钟、KEY1、SW1~SW4、LED、数码管管脚约束。
 ```
+
+## TeamA 板级控制
+
+KEY1 用作手动编码/发送触发，按键按下为低电平：
+
+```text
+KEY1 / key1_n / E3 : 按下沿触发发送
+```
+
+拨码开关管脚：
+
+```text
+SW1 / sw[0] / N14
+SW2 / sw[1] / P16
+SW3 / sw[2] / R17
+SW4 / sw[3] / N15
+```
+
+拨码语义：
+
+```text
+sw[1:0] 选择 8 位原始数据中的一对相邻数据位：
+  00 -> D0 / D1
+  01 -> D2 / D3
+  10 -> D4 / D5
+  11 -> D6 / D7
+
+sw[2] 低电平时注入所选数据位对中的第 1 位错误
+sw[3] 低电平时注入所选数据位对中的第 2 位错误
+```
+
+板上实测 SW3/SW4 拨上时不注错，拨下时注错，因此 `team_a_tx.v` 中使用 `~sw_sync[2]` 和 `~sw_sync[3]` 作为注入使能。
 
 ## SECDED 位分配
 
@@ -96,9 +134,9 @@ led[3] -> LED4 / AB7  -> off
 
 ```verilog
 assign led[3] = 1'b0;
-assign led[2] = demo_led_state[2];
-assign led[1] = demo_led_state[1];
-assign led[0] = demo_led_state[0];
+assign led[2] = led_double_error;
+assign led[1] = led_single_error;
+assign led[0] = led_no_error;
 ```
 
 板上已验证这种映射显示正常。不要再按早期“红黄绿三色灯”理解该开发板。
@@ -113,16 +151,20 @@ DIG 段选低电平点亮
 SEL 位选按板上实测低电平有效处理
 ```
 
-`seg_driver.v` 当前只扫描 4 位字符，`scan_sel` 为 2 位是合理的：
+`seg_driver.v` 当前扫描 8 位字符，`scan_sel` 为 3 位：
 
 ```text
 scan_sel = 0 -> 第 1 位
 scan_sel = 1 -> 第 2 位
 scan_sel = 2 -> 第 3 位
 scan_sel = 3 -> 第 4 位
+scan_sel = 4 -> 第 5 位
+scan_sel = 5 -> 第 6 位
+scan_sel = 6 -> 第 7 位
+scan_sel = 7 -> 第 8 位
 ```
 
-如果以后要 8 位全部独立显示，需要把 `scan_sel` 改成 3 位，并扩展 `display_chars` 或增加 8 位字符缓存。
+前 4 位显示状态 `GOOD/FIX1/ERR2`，后 4 位显示 `raw_data` 和 `decoded_data` 的 HEX。
 
 ## 仿真验证方式
 
@@ -162,6 +204,31 @@ Case3: encode_secded(8'h5A) ^ 13'b0_000000100100
 
 双错场景里 `5A` 可能变成 `5F`，这是正确现象：SECDED 对双比特错误只能检测，不能纠正。
 
+TeamA 闭环仿真顶层：
+
+```text
+tb_team_a_tx
+```
+
+通过标志：
+
+```text
+TEAM_A_TX TEST PASSED
+```
+
+该 testbench 覆盖：
+
+```text
+NO_INJECT_D0_D1
+  SW3/SW4 为高电平，不注错，期望 no_error = 1
+
+INJECT_D2_ONLY
+  选择 D2/D3，只注入 D2，期望 single_error_corrected = 1
+
+INJECT_D6_AND_D7
+  选择 D6/D7，同时注入 D6 和 D7，期望 double_error_detected = 1
+```
+
 ## Vivado 操作记录
 
 生成 bitstream 的正常流程：
@@ -197,4 +264,5 @@ Re-running synthesis will result in resetting implementation...
 2. 板上不是三色 LED，而是 4 个独立绿灯。
 3. 数码管不是简单 4 位共阴极，而是 2 组 4 位八段共阳结构，DIG 低电平点亮。
 4. `tb_ecc_decoder.v` 必须和 `top_ecc_rx.v` 的端口名一致；当前为 `led_1/led_2/led_3`，不是旧的 `led_green/led_yellow/led_red`。
-5. `dig[7]` 小数点常量关闭、未使用的 SEL 位常量关闭，综合 warning 属于预期现象。
+5. KEY3 的 FPGA 管脚是 P19，但当前工程 P19 已用于 `rst_n`，TeamA 触发只使用 KEY1/E3。
+6. SW3/SW4 的注错使能按板上实测为低有效；不要按“拨上一定读 1 且注错”理解当前逻辑。

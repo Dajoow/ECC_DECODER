@@ -30,6 +30,8 @@ module tb_ecc_decoder;
         .rst_n                  (rst_n),
         .valid_in               (valid_in),
         .ecc_data_in            (ecc_data_in),
+        .display_data_mode      (1'b0),
+        .raw_data_in            (8'd0),
         .valid_out              (valid_out),
         .data_out               (data_out),
         .no_error               (no_error),
